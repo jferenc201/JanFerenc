@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gazetteer</title>
+
+    <link rel="stylesheet" href="libs/css/leaflet.css">
+    <link rel="stylesheet" href="libs/css/style.css">
+</head>
+
+<body>
+
+<div id="topbar">
+    <h2>Gazetteer</h2>
+
+    <div id="searchBar">
+        <input type="text" id="search" placeholder="Enter city">
+        <button onclick="searchLocation()">Search</button>
+
+        <select id="countrySelect">
+            <option value="">Country</option>
+        </select>
+    </div>
+</div> 
+
+<div id="map"></div>
+
+<div id="infoBox">
+    <div id="country">Detecting country...</div>
+    <div id="details"></div>
+    <div id="weather">Detecting weather...</div>
+</div>
+
+<script src="libs/js/leaflet.js"></script>
+<script src="libs/js/script.js"></script>
+
+</body>
+</html>
