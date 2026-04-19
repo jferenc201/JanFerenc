@@ -60,7 +60,7 @@ locateBtn.addTo(map);
 // CACHE
 let countryCache = {};
 
-// ✅ LOAD COUNTRIES (FIXED)
+// LOAD COUNTRIES 
 document.addEventListener("DOMContentLoaded", function () {
 
     let select = document.getElementById("countrySelect");
@@ -296,7 +296,6 @@ document.getElementById("search").addEventListener("keypress", function (e) {
     if (e.key === "Enter") searchLocation();
 });
 
-// FIX MAP SIZE BUG
 setTimeout(() => {
     map.invalidateSize();
 }, 300);
