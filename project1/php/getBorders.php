@@ -42,7 +42,6 @@ $iso2to3 = [
 
 $lookup = (strlen($code) === 2 && isset($iso2to3[$code])) ? $iso2to3[$code] : $code;
 
-// Try every possible path
 $paths = [
     __DIR__ . '/../libs/js/countryBorders.geo.json',
     __DIR__ . '/../libs/countryBorders.geo.json',
