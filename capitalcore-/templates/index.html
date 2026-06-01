@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CapitalCore — Personal Finance Dashboard</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Custom CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-light border-bottom px-4 py-3">
+        <ul class="nav nav-pills" id="authTabs">
+          <li class="nav-item"><a class="nav-link active px-3 py-1" id="tab-login" href="#" onclick="switchAuth('login')">Log in</a></li>
+          <li class="nav-item"><a class="nav-link px-3 py-1" id="tab-register" href="#" onclick="switchAuth('register')">Sign up</a></li>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <!-- LOGIN -->
+      <div class="modal-body p-4" id="panel-login">
+        <p class="text-muted small mb-4">Log in to sync your data across devices.</p>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Email</label>
+          <input type="email" id="login-email" class="form-control" placeholder="you@example.com">
+          <div class="invalid-feedback" id="le-err"></div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Password</label>
+          <input type="password" id="login-pass" class="form-control" placeholder="••••••••">
+          <div class="invalid-feedback" id="lp-err"></div>
+        </div>
+        <button class="btn btn-dark w-100 py-2 fw-semibold" onclick="login()">Log in <i class="bi bi-arrow-right"></i></button>
+      </div>
+      <!-- REGISTER -->
+      <div class="modal-body p-4" id="panel-register" style="display:none">
+        <p class="text-muted small mb-4">Free account. No card required.</p>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Full name</label>
+          <input type="text" id="reg-name" class="form-control" placeholder="Jane Smith">
+          <div class="invalid-feedback" id="rn-err"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Email</label>
+          <input type="email" id="reg-email" class="form-control" placeholder="you@example.com">
+          <div class="invalid-feedback" id="re-err"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Password</label>
+          <input type="password" id="reg-pass" class="form-control" placeholder="Min. 6 characters">
+          <div class="invalid-feedback" id="rp-err"></div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Confirm password</label>
+          <input type="password" id="reg-pass2" class="form-control" placeholder="Repeat password">
+          <div class="invalid-feedback" id="rp2-err"></div>
+        </div>
+        <button class="btn btn-dark w-100 py-2 fw-semibold" onclick="register()">Create account <i class="bi bi-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<nav class="navbar navbar-expand-lg sticky-top" id="topbar">
+  <div class="container-xl">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <div class="brand-mark">C</div>
+      <span class="brand-name">Capital<span class="brand-light">Core</span></span>
+    </a>
+
+    <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto ms-4 gap-1">
+        <li class="nav-item"><a class="nav-link active" onclick="nav('overview')"   id="nb-overview"><i class="bi bi-grid-1x2"></i> Overview</a></li>
+        <li class="nav-item"><a class="nav-link" onclick="nav('income')"     id="nb-income"><i class="bi bi-arrow-up-circle"></i> Income</a></li>
+        <li class="nav-item"><a class="nav-link" onclick="nav('spending')"   id="nb-spending"><i class="bi bi-wallet2"></i> Spending</a></li>
+        <li class="nav-item"><a class="nav-link" onclick="nav('savings')"    id="nb-savings"><i class="bi bi-piggy-bank"></i> Savings</a></li>
+        <li class="nav-item"><a class="nav-link" onclick="nav('debt')"       id="nb-debt"><i class="bi bi-credit-card"></i> Debt</a></li>
+        <li class="nav-item"><a class="nav-link" onclick="nav('investment')" id="nb-investment"><i class="bi bi-graph-up-arrow"></i> Investments</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="auth-out">
+        <button class="btn btn-outline-light btn-sm px-3" onclick="openAuth('login')">Log in</button>
+        <button class="btn btn-primary btn-sm px-3 fw-semibold" onclick="openAuth('register')">Sign up free</button>
+      </div>
+      <div class="align-items-center gap-2" id="auth-in" style="display:none">
+        <div class="avatar-circle" id="auth-avatar">J</div>
+        <span class="text-white-50 small" id="auth-name"></span>
+        <button class="btn btn-outline-light btn-sm px-3" onclick="logout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE BOTTOM BAR -->
+<div class="mobile-bottom-bar d-lg-none">
+  <button class="mbb active" id="bb-overview"    onclick="nav('overview')"><i class="bi bi-grid-1x2"></i><span>Overview</span></button>
+  <button class="mbb" id="bb-income"     onclick="nav('income')"><i class="bi bi-arrow-up-circle"></i><span>Income</span></button>
+  <button class="mbb" id="bb-spending"   onclick="nav('spending')"><i class="bi bi-wallet2"></i><span>Spend</span></button>
+  <button class="mbb" id="bb-savings"    onclick="nav('savings')"><i class="bi bi-piggy-bank"></i><span>Savings</span></button>
+  <button class="mbb" id="bb-debt"       onclick="nav('debt')"><i class="bi bi-credit-card"></i><span>Debt</span></button>
+  <button class="mbb" id="bb-investment" onclick="nav('investment')"><i class="bi bi-graph-up-arrow"></i><span>Invest</span></button>
+</div>
+
+<!-- MAIN -->
+<main class="container-xl py-4 px-3 px-md-4">
+
+  <!-- TOAST -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="mainToast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-semibold" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ OVERVIEW ═══════════════ -->
+  <div class="page active" id="page-overview">
+    <div class="page-hero mb-4">
+      <h1 class="page-title" id="greeting">Good morning</h1>
+      <p class="text-muted">Your financial snapshot for <span id="current-month">June 2026</span>.</p>
+    </div>
+
+    <!-- METRIC CARDS -->
+    <div class="row g-3 mb-4" id="ov-metrics">
+      <div class="col-6 col-md-4 col-xl"><div class="metric-card"><div class="d-flex justify-content-between align-items-start mb-2"><span class="metric-label">Monthly income</span><span class="metric-icon icon-green"><i class="bi bi-arrow-up-circle"></i></span></div><div class="metric-val text-success" id="ov-income">£0</div><div class="metric-sub text-success">Loading...</div></div></div>
+      <div class="col-6 col-md-4 col-xl"><div class="metric-card"><div class="d-flex justify-content-between align-items-start mb-2"><span class="metric-label">Total spending</span><span class="metric-icon icon-red"><i class="bi bi-receipt"></i></span></div><div class="metric-val text-danger" id="ov-spent">£0</div><div class="metric-sub" id="ov-spent-pct">0% of income</div></div></div>
+      <div class="col-6 col-md-4 col-xl"><div class="metric-card"><div class="d-flex justify-content-between align-items-start mb-2"><span class="metric-label">Net saved</span><span class="metric-icon icon-blue"><i class="bi bi-safe2"></i></span></div><div class="metric-val text-primary" id="ov-saved">£0</div><div class="metric-sub text-success" id="ov-rate">0% savings rate</div></div></div>
+      <div class="col-6 col-md-4 col-xl"><div class="metric-card"><div class="d-flex justify-content-between align-items-start mb-2"><span class="metric-label">Total debt</span><span class="metric-icon icon-red"><i class="bi bi-bank"></i></span></div><div class="metric-val text-danger" id="ov-debt">£0</div><div class="metric-sub" id="ov-debt-sub">—</div></div></div>
+      <div class="col-6 col-md-4 col-xl"><div class="metric-card"><div class="d-flex justify-content-between align-items-start mb-2"><span class="metric-label">Portfolio</span><span class="metric-icon icon-purple"><i class="bi bi-graph-up-arrow"></i></span></div><div class="metric-val text-success" id="ov-portfolio">£0</div><div class="metric-sub text-success" id="ov-gain">+0%</div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-5">
+        <div class="card h-100">
+          <div class="card-header"><span class="card-label">Spending breakdown</span></div>
+          <div class="card-body">
+            <div style="position:relative;height:200px"><canvas id="donutChart" role="img" aria-label="Spending by category donut chart">Spending breakdown by category.</canvas></div>
+            <div id="donutLegend" class="chart-legend mt-3"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <div class="card h-100">
+          <div class="card-header"><span class="card-label">Income vs spending — last 6 months</span></div>
+          <div class="card-body">
+            <div style="position:relative;height:200px"><canvas id="trendChart" role="img" aria-label="Income vs spending bar chart over 6 months">Monthly comparison chart.</canvas></div>
+            <div class="d-flex gap-3 mt-2">
+              <span class="leg-item"><span class="leg-sq" style="background:#10b981"></span>Income</span>
+              <span class="leg-item"><span class="leg-sq" style="background:#f87171"></span>Spending</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between"><span class="card-label">Recent transactions</span><button class="btn-link-sm" onclick="nav('spending')">View all</button></div>
+      <div id="txFeed"></div>
+    </div>
+
+    <div class="text-center mt-3" id="seed-banner" style="display:none">
+      <button class="btn btn-outline-secondary btn-sm" onclick="seedData()"><i class="bi bi-database-fill-gear me-1"></i>Load demo data</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ INCOME ═══════════════ -->
+  <div class="page" id="page-income">
+    <div class="page-hero mb-4"><h1 class="page-title">Income</h1><p class="text-muted">Track all your income streams.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">This month</div><div class="metric-val text-success" id="inc-total">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Annual run rate</div><div class="metric-val" id="inc-annual">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Income sources</div><div class="metric-val" id="inc-count">0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Avg per source</div><div class="metric-val" id="inc-avg">£0</div></div></div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-5">
+        <div class="card">
+          <div class="card-header"><span class="card-label">Income streams</span></div>
+          <div id="income-list"><div class="empty-msg">No income sources yet.</div></div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <div class="card">
+          <div class="card-header"><span class="card-label">Monthly income</span></div>
+          <div class="card-body"><div style="position:relative;height:220px"><canvas id="incomeChart" role="img" aria-label="Monthly income bar chart">Monthly income chart.</canvas></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-label">Add income source</span></div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-5"><label class="form-label fw-semibold small">Source name</label><input type="text" id="inc-name" class="form-control" placeholder="e.g. Salary, Freelance…"></div>
+          <div class="col-6 col-md-3"><label class="form-label fw-semibold small">Monthly amount (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="inc-amount" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Category</label><select id="inc-cat" class="form-select"><option>Salary</option><option>Freelance</option><option>Rental</option><option>Dividends</option><option>Benefits</option><option>Other</option></select></div>
+          <div class="col-12 col-md-2"><button class="btn btn-dark w-100 fw-semibold" onclick="addIncome()"><i class="bi bi-plus-lg me-1"></i>Add</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SPENDING ═══════════════ -->
+  <div class="page" id="page-spending">
+    <div class="page-hero mb-4"><h1 class="page-title">Spending</h1><p class="text-muted">Track expenses against your monthly budgets.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Spent this month</div><div class="metric-val text-danger" id="sp-total">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Monthly budget</div><div class="metric-val" id="sp-budget">£3,200</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Remaining</div><div class="metric-val text-success" id="sp-remaining">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Over budget</div><div class="metric-val text-warning" id="sp-over">0 cat.</div></div></div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><span class="card-label">Budget vs actual</span></div>
+      <div class="card-body" id="budget-bars"></div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><span class="card-label">Log transaction</span></div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-4"><label class="form-label fw-semibold small">Description</label><input type="text" id="tx-desc" class="form-control" placeholder="What did you buy?"></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Amount (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="tx-amount" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Category</label><select id="tx-cat" class="form-select"><option>Housing</option><option>Food</option><option>Transport</option><option>Entertainment</option><option>Subscriptions</option><option>Other</option></select></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Date</label><input type="date" id="tx-date" class="form-control"></div>
+          <div class="col-6 col-md-2"><button class="btn btn-dark w-100 fw-semibold" onclick="addTransaction()"><i class="bi bi-plus-lg me-1"></i>Log</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-label">Transactions</span></div>
+      <div id="tx-list"><div class="empty-msg">No transactions yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SAVINGS ═══════════════ -->
+  <div class="page" id="page-savings">
+    <div class="page-hero mb-4"><h1 class="page-title">Savings goals</h1><p class="text-muted">Set targets and track your progress.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Total saved</div><div class="metric-val text-success" id="sv-total">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Active goals</div><div class="metric-val" id="sv-count">0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Goals on track</div><div class="metric-val text-primary" id="sv-track">0/0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Completed</div><div class="metric-val text-success" id="sv-done">0</div></div></div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between"><span class="card-label">Goals</span><button class="btn-link-sm" onclick="toggleGoalForm()"><i class="bi bi-plus-lg me-1"></i>New goal</button></div>
+      <div id="goals-list"><div class="empty-msg">No goals yet.</div></div>
+    </div>
+    <div class="card" id="goal-form" style="display:none">
+      <div class="card-header"><span class="card-label">Add savings goal</span></div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-4"><label class="form-label fw-semibold small">Goal name</label><input type="text" id="goal-name" class="form-control" placeholder="e.g. House deposit"></div>
+          <div class="col-12 col-md-3"><label class="form-label fw-semibold small">Description</label><input type="text" id="goal-desc" class="form-control" placeholder="Optional"></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Target (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="goal-target" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Already saved (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="goal-saved" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Monthly (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="goal-monthly" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><button class="btn btn-dark w-100 fw-semibold" onclick="addGoal()"><i class="bi bi-plus-lg me-1"></i>Add</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DEBT ═══════════════ -->
+  <div class="page" id="page-debt">
+    <div class="page-hero mb-4"><h1 class="page-title">Debt payoff planner</h1><p class="text-muted">Avalanche method — pay highest interest rate first to save the most money.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Total owed</div><div class="metric-val text-danger" id="dt-total">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Monthly payment</div><div class="metric-val" id="dt-monthly">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Debt-free date</div><div class="metric-val text-primary" id="dt-date">—</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Est. total interest</div><div class="metric-val text-danger" id="dt-interest">£0</div></div></div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between"><span class="card-label">Debt breakdown — sorted by interest rate</span><button class="btn-link-sm" onclick="toggleDebtForm()"><i class="bi bi-plus-lg me-1"></i>Add debt</button></div>
+      <div id="debt-list"><div class="empty-msg">No debts added.</div></div>
+    </div>
+    <div class="card" id="debt-form" style="display:none">
+      <div class="card-header"><span class="card-label">Add debt</span></div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-3"><label class="form-label fw-semibold small">Debt name</label><input type="text" id="debt-name" class="form-control" placeholder="e.g. Credit card"></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Balance (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="debt-balance" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Interest rate (%)</label><div class="input-group"><input type="number" id="debt-rate" class="form-control" placeholder="0.0" step="0.1"><span class="input-group-text">%</span></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Monthly payment (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="debt-pay" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-3"><button class="btn btn-dark w-100 fw-semibold" onclick="addDebt()"><i class="bi bi-plus-lg me-1"></i>Add debt</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-label">Payoff projection</span></div>
+      <div class="card-body"><div style="position:relative;height:220px"><canvas id="debtChart" role="img" aria-label="Debt payoff projection line chart">Debt balance over time.</canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ INVESTMENTS ═══════════════ -->
+  <div class="page" id="page-investment">
+    <div class="page-hero mb-4"><h1 class="page-title">Investments</h1><p class="text-muted">Track your portfolio performance and asset allocation.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Portfolio value</div><div class="metric-val text-success" id="inv-value">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Amount invested</div><div class="metric-val" id="inv-cost">£0</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Total return</div><div class="metric-val text-success" id="inv-return">+£0</div><div class="metric-sub text-success" id="inv-pct">+0%</div></div></div>
+      <div class="col-6 col-md-3"><div class="metric-card"><div class="metric-label mb-1">Positions</div><div class="metric-val" id="inv-count">0</div></div></div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-6">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between"><span class="card-label">Holdings</span><button class="btn-link-sm" onclick="toggleInvForm()"><i class="bi bi-plus-lg me-1"></i>Add</button></div>
+          <div id="holdings-list"><div class="empty-msg">No positions yet.</div></div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card">
+          <div class="card-header"><span class="card-label">Portfolio growth</span></div>
+          <div class="card-body"><div style="position:relative;height:220px"><canvas id="investChart" role="img" aria-label="Portfolio growth over time">Portfolio growth chart.</canvas></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="inv-form" style="display:none">
+      <div class="card-header"><span class="card-label">Add position</span></div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-3"><label class="form-label fw-semibold small">Asset name</label><input type="text" id="inv-name" class="form-control" placeholder="e.g. Vanguard S&P 500"></div>
+          <div class="col-12 col-md-2"><label class="form-label fw-semibold small">Description</label><input type="text" id="inv-desc" class="form-control" placeholder="e.g. ETF, Stocks…"></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Amount invested (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="inv-cost-input" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-2"><label class="form-label fw-semibold small">Current value (£)</label><div class="input-group"><span class="input-group-text">£</span><input type="number" id="inv-val-input" class="form-control" placeholder="0"></div></div>
+          <div class="col-6 col-md-1"><label class="form-label fw-semibold small">Type</label><select id="inv-type" class="form-select"><option>ETF</option><option>Stocks</option><option>Bonds</option><option>Cash ISA</option><option>Crypto</option><option>Other</option></select></div>
+          <div class="col-6 col-md-2"><button class="btn btn-dark w-100 fw-semibold" onclick="addInvestment()"><i class="bi bi-plus-lg me-1"></i>Add</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- App Scripts -->
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
