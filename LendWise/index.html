@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>LendWise — Mortgage Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/charts.css">
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-tabs">
+        <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">Log in</button>
+        <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">Create account</button>
+      </div>
+      <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="auth-login-panel" class="modal-body">
+      <p class="modal-sub">Log in to save calculations to the cloud.</p>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="input-wrap"><input type="email" id="login-email" class="field-input" placeholder="you@example.com"></div>
+        <span class="auth-error" id="login-email-err"></span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="input-wrap"><input type="password" id="login-pass" class="field-input" placeholder="••••••••"></div>
+        <span class="auth-error" id="login-pass-err"></span>
+      </div>
+      <button class="calc-btn" onclick="login()">Log in →</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="auth-reg-panel" class="modal-body" style="display:none">
+      <p class="modal-sub">Free account. No credit card required.</p>
+      <div class="field-group">
+        <label class="field-label">Full name</label>
+        <div class="input-wrap"><input type="text" id="reg-name" class="field-input" placeholder="Jane Smith"></div>
+        <span class="auth-error" id="reg-name-err"></span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="input-wrap"><input type="email" id="reg-email" class="field-input" placeholder="you@example.com"></div>
+        <span class="auth-error" id="reg-email-err"></span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="input-wrap"><input type="password" id="reg-pass" class="field-input" placeholder="Min. 6 characters"></div>
+        <span class="auth-error" id="reg-pass-err"></span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Confirm password</label>
+        <div class="input-wrap"><input type="password" id="reg-pass2" class="field-input" placeholder="Repeat password"></div>
+        <span class="auth-error" id="reg-pass2-err"></span>
+      </div>
+      <button class="calc-btn" onclick="register()">Create account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">
+        <span class="brand-lend">Lend</span><span class="brand-wise">Wise</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="nav-link active" onclick="showPage('calculator')">Calculator</a>
+      <a class="nav-link" onclick="showPage('affordability')">Affordability</a>
+      <a class="nav-link" onclick="showPage('comparison')">Compare Lenders</a>
+      <a class="nav-link" onclick="showPage('charts')">Charts</a>
+      <a class="nav-link" onclick="showPage('schedule')">Amortisation</a>
+      <a class="nav-link" onclick="showPage('history')">History</a>
+    </nav>
+    <button class="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="header-auth">
+      <div id="auth-logged-out" style="display:flex;gap:8px">
+        <button class="auth-nav-btn" onclick="openAuthModal('login')">Log in</button>
+        <button class="auth-nav-btn primary" onclick="openAuthModal('register')">Sign up free</button>
+      </div>
+      <div id="auth-logged-in" style="display:none;align-items:center;gap:12px">
+        <div class="auth-avatar" id="auth-user-name">J</div>
+        <button class="auth-nav-btn" onclick="logout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="mobile-nav" id="mobile-nav" onclick="if(event.target===this)closeMobileNav()">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-link active" id="mnl-calculator" onclick="showPage('calculator');closeMobileNav()">🏠 Calculator</button>
+    <button class="mobile-nav-link" id="mnl-affordability" onclick="showPage('affordability');closeMobileNav()">💰 Affordability</button>
+    <button class="mobile-nav-link" id="mnl-comparison" onclick="showPage('comparison');closeMobileNav()">🏦 Compare Lenders</button>
+    <button class="mobile-nav-link" id="mnl-charts" onclick="showPage('charts');closeMobileNav()">📊 Charts</button>
+    <button class="mobile-nav-link" id="mnl-schedule" onclick="showPage('schedule');closeMobileNav()">📋 Amortisation</button>
+    <button class="mobile-nav-link" id="mnl-history" onclick="showPage('history');closeMobileNav()">📁 History</button>
+    <div style="height:1px;background:rgba(255,255,255,0.1);margin:12px 0"></div>
+    <div id="mnl-logged-out">
+      <button class="mobile-nav-link" onclick="openAuthModal('login');closeMobileNav()">🔑 Log in</button>
+      <button class="mobile-nav-link" onclick="openAuthModal('register');closeMobileNav()">✨ Sign up free</button>
+    </div>
+    <div id="mnl-logged-in" style="display:none">
+      <button class="mobile-nav-link" onclick="logout();closeMobileNav()">👋 Log out</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM BAR -->
+<div class="mobile-bottom-bar">
+  <button class="mbb-btn active" id="mbb-calculator" onclick="showPage('calculator')"><span>🏠</span>Calc</button>
+  <button class="mbb-btn" id="mbb-affordability" onclick="showPage('affordability')"><span>💰</span>Afford</button>
+  <button class="mbb-btn" id="mbb-comparison" onclick="showPage('comparison')"><span>🏦</span>Lenders</button>
+  <button class="mbb-btn" id="mbb-charts" onclick="showPage('charts')"><span>📊</span>Charts</button>
+  <button class="mbb-btn" id="mbb-schedule" onclick="showPage('schedule')"><span>📋</span>Schedule</button>
+</div>
+
+<!-- CALCULATOR PAGE -->
+<div class="page active" id="page-calculator">
+  <div class="page-inner">
+    <div class="page-hero">
+      <h1>Mortgage Calculator</h1>
+      <p>Calculate your monthly repayments, total interest, and full amortisation breakdown.</p>
+    </div>
+    <div class="calc-layout">
+      <div class="card inputs-card">
+        <div class="card-header"><span class="card-title">Loan Details</span></div>
+        <div class="card-body">
+          <div class="field-group">
+            <label class="field-label">Property Value</label>
+            <div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="propertyValue" class="field-input" value="350000" min="0" step="1000"></div>
+            <input type="range" class="slider" id="propertySlider" min="50000" max="2000000" step="5000" value="350000">
+            <div class="slider-labels"><span>£50k</span><span>£2m</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Deposit</label>
+            <div class="input-row">
+              <div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="deposit" class="field-input" value="70000" min="0" step="1000"></div>
+              <div class="input-wrap small"><input type="number" id="depositPct" class="field-input" value="20" min="0" max="99" step="1"><span class="input-suffix">%</span></div>
+            </div>
+            <input type="range" class="slider" id="depositSlider" min="0" max="100" step="1" value="20">
+            <div class="slider-labels"><span>0%</span><span>100%</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Interest Rate (Annual)</label>
+            <div class="input-wrap"><input type="number" id="interestRate" class="field-input" value="4.5" min="0.1" max="20" step="0.1"><span class="input-suffix">%</span></div>
+            <input type="range" class="slider" id="rateSlider" min="0.5" max="15" step="0.1" value="4.5">
+            <div class="slider-labels"><span>0.5%</span><span>15%</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Mortgage Term</label>
+            <div class="input-wrap"><input type="number" id="term" class="field-input" value="25" min="1" max="40" step="1"><span class="input-suffix">years</span></div>
+            <input type="range" class="slider" id="termSlider" min="1" max="40" step="1" value="25">
+            <div class="slider-labels"><span>1yr</span><span>40yrs</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Repayment Type</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active" id="btn-repayment" onclick="setType('repayment')">Repayment</button>
+              <button class="toggle-btn" id="btn-interest" onclick="setType('interest')">Interest Only</button>
+            </div>
+          </div>
+          <button class="calc-btn" onclick="calculate()">Calculate Mortgage <span class="btn-arrow">→</span></button>
+          <button class="save-btn" onclick="saveCalculation()">Save to History</button>
+        </div>
+      </div>
+      <div class="results-col">
+        <div class="results-grid">
+          <div class="result-card primary"><div class="result-label">Monthly Payment</div><div class="result-value" id="monthlyPayment">£0</div><div class="result-sub" id="monthlyBreakdown">—</div></div>
+          <div class="result-card"><div class="result-label">Total Repayable</div><div class="result-value" id="totalRepayable">£0</div><div class="result-sub" id="totalSub">—</div></div>
+          <div class="result-card"><div class="result-label">Total Interest</div><div class="result-value" id="totalInterest">£0</div><div class="result-sub" id="interestPct">—</div></div>
+          <div class="result-card"><div class="result-label">Loan to Value</div><div class="result-value" id="ltvValue">0%</div><div class="result-sub" id="ltvBand">—</div></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Cost Breakdown</span></div>
+          <div class="card-body chart-body"><canvas id="donutChart" width="200" height="200"></canvas><div class="chart-legend" id="chartLegend"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Rate Comparison</span><span class="card-sub">vs current rate</span></div>
+          <div class="card-body"><div class="rate-table" id="rateTable"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AFFORDABILITY PAGE -->
+<div class="page" id="page-affordability">
+  <div class="page-inner">
+    <div class="page-hero"><h1>Affordability Checker</h1><p>Find out how much you can borrow based on your income and outgoings.</p></div>
+    <div class="calc-layout">
+      <div class="card inputs-card">
+        <div class="card-header"><span class="card-title">Your Income & Outgoings</span></div>
+        <div class="card-body">
+          <div class="field-group"><label class="field-label">Annual Gross Salary</label><div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="salary1" class="field-input" value="55000" step="1000"></div></div>
+          <div class="field-group"><label class="field-label">Partner's Annual Salary <span class="optional">(optional)</span></label><div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="salary2" class="field-input" value="0" step="1000"></div></div>
+          <div class="field-group"><label class="field-label">Monthly Debt Payments</label><div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="monthlyDebt" class="field-input" value="0" step="50"></div><div class="field-hint">Car finance, credit cards, loans etc.</div></div>
+          <div class="field-group"><label class="field-label">Monthly Living Costs</label><div class="input-wrap"><span class="input-prefix">£</span><input type="number" id="livingCosts" class="field-input" value="1500" step="50"></div></div>
+          <div class="field-group"><label class="field-label">Interest Rate</label><div class="input-wrap"><input type="number" id="affordRate" class="field-input" value="4.5" step="0.1"><span class="input-suffix">%</span></div></div>
+          <div class="field-group"><label class="field-label">Mortgage Term</label><div class="input-wrap"><input type="number" id="affordTerm" class="field-input" value="25" step="1"><span class="input-suffix">years</span></div></div>
+          <button class="calc-btn" onclick="checkAffordability()">Check Affordability →</button>
+        </div>
+      </div>
+      <div class="results-col">
+        <div class="results-grid">
+          <div class="result-card primary"><div class="result-label">Max Borrowing</div><div class="result-value" id="maxBorrow">£0</div><div class="result-sub">4.5× salary rule</div></div>
+          <div class="result-card"><div class="result-label">Max Property Value</div><div class="result-value" id="maxProperty">£0</div><div class="result-sub" id="maxPropSub">with 10% deposit</div></div>
+          <div class="result-card"><div class="result-label">Monthly Payment</div><div class="result-value" id="affordMonthly">£0</div><div class="result-sub" id="affordMonthlySub">—</div></div>
+          <div class="result-card"><div class="result-label">Stress Test Rate</div><div class="result-value" id="stressRate">0%</div><div class="result-sub" id="stressSub">+3% stress test</div></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Borrowing Scenarios</span></div><div class="card-body" id="scenariosTable"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Affordability Rating</span></div><div class="card-body"><div class="meter-wrap"><div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div><div class="meter-labels"><span>Tight</span><span>Comfortable</span><span>Excellent</span></div></div><div class="meter-verdict" id="meterVerdict"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE LENDERS PAGE -->
+<div class="page" id="page-comparison">
+  <div class="page-inner">
+    <div class="page-hero"><h1>Compare Lenders</h1><p>See how major UK lenders compare for your loan amount and term.</p></div>
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <span class="card-title">Market Comparison</span>
+          <div class="comp-meta">Based on <strong id="comp-principal">£280,000</strong> loan over <strong id="comp-term">25 years</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="comp-filter-btn ctrl-btn active" onclick="setCompFilter('all',this)">All</button>
+          <button class="comp-filter-btn ctrl-btn" onclick="setCompFilter('2yr',this)">2yr Fixed</button>
+          <button class="comp-filter-btn ctrl-btn" onclick="setCompFilter('5yr',this)">5yr Fixed</button>
+          <button class="comp-filter-btn ctrl-btn" onclick="setCompFilter('tracker',this)">Tracker</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Lender</th>
+              <th><button class="comp-sort-btn" data-col="rate" onclick="sortComparison('rate')">Rate ↕</button></th>
+              <th><button class="comp-sort-btn" data-col="monthly" onclick="sortComparison('monthly')">Monthly ↕</button></th>
+              <th><button class="comp-sort-btn" data-col="fee" onclick="sortComparison('fee')">Arrangement Fee ↕</button></th>
+              <th><button class="comp-sort-btn" data-col="totalCost" onclick="sortComparison('totalCost')">Total Cost ↕</button></th>
+              <th>vs Cheapest</th>
+            </tr>
+          </thead>
+          <tbody id="comp-tbody"></tbody>
+        </table>
+      </div>
+      <div class="comp-disclaimer">Rates are illustrative and updated periodically. Always confirm directly with lenders. Not financial advice.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS PAGE -->
+<div class="page" id="page-charts">
+  <div class="page-inner">
+    <div class="page-hero">
+      <h1>Your Mortgage in Numbers</h1>
+      <p>Simple charts that show exactly where your money goes and how your mortgage shrinks over time.</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="charts-empty" class="card" style="display:none">
+      <div class="empty-state">Run a calculation first on the Calculator page, then come back here to see your charts.</div>
+    </div>
+
+    <div id="charts-content">
+      <!-- KEY STATS -->
+      <div class="results-grid" style="margin-bottom:20px">
+        <div class="result-card" id="chart-stat-1"></div>
+        <div class="result-card" id="chart-stat-2"></div>
+        <div class="result-card" id="chart-stat-3"></div>
+        <div class="result-card primary" id="chart-stat-4"></div>
+      </div>
+
+      <!-- CHART 1 -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <span class="card-title">What you owe vs what you own</span>
+            <div class="chart-explain">The red line is your remaining mortgage debt. The green line is your share of the property. They cross when you own more than you owe.</div>
+          </div>
+        </div>
+        <div class="card-body" style="height:280px;position:relative">
+          <canvas id="balanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- CHART 2 -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="card-title">Where does each year's payments go?</span>
+            <div class="chart-explain">Each bar is one year. The red part is money that goes to the bank as interest — it doesn't reduce your debt. The dark part actually pays off your loan. Notice how the split changes over time.</div>
+          </div>
+        </div>
+        <div class="card-body" style="height:280px;position:relative">
+          <canvas id="splitChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AMORTISATION PAGE -->
+<div class="page" id="page-schedule">
+  <div class="page-inner">
+    <div class="page-hero"><h1>Amortisation Schedule</h1><p>Full month-by-month breakdown of every payment.</p></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Schedule</span>
+        <div class="schedule-controls">
+          <button class="ctrl-btn active" onclick="setView('monthly',this)">Monthly</button>
+          <button class="ctrl-btn" onclick="setView('yearly',this)">Yearly</button>
+          <button class="ctrl-btn" onclick="exportCSV()">Export CSV</button>
+        </div>
+      </div>
+
+      <!-- SEARCH & FILTER BAR -->
+      <div class="sched-toolbar">
+        <div class="sched-toolbar-left">
+          <input type="text" id="scheduleSearch" class="sched-search" placeholder="Search by month or date…" oninput="searchSchedule(this.value)">
+          <select id="yearFilter" class="sched-select" onchange="filterByYear(this.value)"><option value="all">All years</option></select>
+          <div class="jump-wrap">
+            <input type="number" id="jumpInput" class="sched-jump" placeholder="Jump to #" min="1">
+            <button class="ctrl-btn" onclick="jumpToPayment()">Go</button>
+          </div>
+          <button class="ctrl-btn" onclick="clearScheduleFilters()">Clear</button>
+        </div>
+        <span class="sched-count" id="scheduleCount"></span>
+      </div>
+
+      <div class="schedule-stats" id="scheduleStats"></div>
+      <div class="table-wrap">
+        <table class="amort-table" id="amortTable">
+          <thead>
+            <tr>
+              <th data-sort="month" onclick="sortSchedule('month')" style="cursor:pointer"># ↕</th>
+              <th>Date</th>
+              <th data-sort="payment" onclick="sortSchedule('payment')" style="cursor:pointer;text-align:right">Payment ↕</th>
+              <th data-sort="principal" onclick="sortSchedule('principal')" style="cursor:pointer;text-align:right">Principal ↕</th>
+              <th data-sort="interest" onclick="sortSchedule('interest')" style="cursor:pointer;text-align:right">Interest ↕</th>
+              <th data-sort="balance" onclick="sortSchedule('balance')" style="cursor:pointer;text-align:right">Balance ↕</th>
+              <th data-sort="equity" onclick="sortSchedule('equity')" style="cursor:pointer;text-align:right">Equity ↕</th>
+            </tr>
+          </thead>
+          <tbody id="amortBody"><tr><td colspan="7" class="empty-row">Run a calculation first.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history">
+  <div class="page-inner">
+    <div class="page-hero"><h1>Calculation History</h1><p>Your saved mortgage calculations.</p></div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Saved Calculations</span><button class="ctrl-btn danger" onclick="clearHistory()">Clear All</button></div>
+      <div id="historyList"><div class="empty-state">No saved calculations yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/calculator.js"></script>
+<script src="js/affordability.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/comparison.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
